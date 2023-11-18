@@ -3,6 +3,8 @@ import networkx as nx
 import pickle
 import csv
 import sys
+import time
+from datetime import datetime
 
 
 def progress_bar(percent, complete=False):
@@ -51,6 +53,14 @@ def process_data(graph, nodes, rank):
     dist = {}
     centrality = {}
     count = 0
+    start_time = time.time()  # Record the start time
+    # print(f"start time: ", start_time)
+    current_time = datetime.now().strftime("%H:%M:%S")
+    print(f"Current time in 24-hour format: {current_time}")
+
+    # uncomment the following line and code before forloop ends for real time updates for elapsed time
+    # interval = 10  # Print elapsed time every 10 seconds
+
     output_file = 'concatenated_result.txt'
     with open(output_file, 'w') as file:
         for node in nodes:
@@ -61,10 +71,28 @@ def process_data(graph, nodes, rank):
             dist[node], paths = nx.single_source_dijkstra(graph, node)
             centrality = closeness_centrality(dist, graph)
             file.write(f"Node {node}: Closeness Centrality = {centrality[node]:}\n")  # Write each node's centrality
+            count += 1
 
+            # Print elapsed time at specified interval
+            # if time.time() - start_time > interval:
+            #     elapsed_time = time.time() - start_time
+            #     hours = int(elapsed_time // 3600)
+            #     minutes = int((elapsed_time % 3600) // 60)
+            #     seconds = int(elapsed_time % 60)
+            #     print(f" Elapsed time: {hours:02}:{minutes:02}:{seconds:02}")
+            #
+            #     interval += 10  # Increase interval for the next print
 
     # Finish the loading bar
     progress_bar(1, complete=True)
+
+    # Print final elapsed time
+    end_time = time.time()  # Record the end time
+    elapsed_time = end_time - start_time
+    hours = int(elapsed_time // 3600)
+    minutes = int((elapsed_time % 3600) // 60)
+    seconds = int(elapsed_time % 60)
+    print(f"Elapsed time: {hours:02}:{minutes:02}:{seconds:02}")
     return centrality
 
 
@@ -103,7 +131,6 @@ def main():
     if rank == 0:
         # load data, make graph
         filename = 'facebook_combined.txt'
-        
         # filename = 'facebook_combined_chunk.txt'
         node_names, edges = load_data(filename)
         graph = make_graph(node_names, edges)
