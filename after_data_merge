@@ -78,10 +78,9 @@ def main():
     
     filename = 'facebook_combined.txt'
     node_names, edges = load_data(filename)
-    graph = make_graph(node_names, edges)
 
     if rank == 0:
-
+        graph = make_graph(node_names, edges)
         #
         '''
         data = {
