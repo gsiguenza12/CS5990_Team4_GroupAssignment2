@@ -76,28 +76,11 @@ def main():
     rank = comm.Get_rank()
     size = comm.Get_size()
     
-    filename = 'facebook_combined.txt'
-    node_names, edges = load_data(filename)
-
     if rank == 0:
+        # load data, make graph
+        filename = 'facebook_combined.txt'
+        node_names, edges = load_data(filename)
         graph = make_graph(node_names, edges)
-        #
-        '''
-        data = {
-            0: [(1, 1), (2, 4)],
-            1: [(0, 1), (2, 2), (3, 5)],
-            2: [(0, 4), (1, 2), (3, 1)],
-            3: [(1, 5), (2, 1)]
-        }
-        graph = nx.Graph()
-        
-
-        for node, edges in data.items():
-            for edge in edges:
-                graph.add_edge(node, edge[0], weight=edge[1])
-        # print(list(graph.adjacency()))
-        '''
-
 
         # Serialize the graph
         serialized_graph = pickle.dumps(graph)
