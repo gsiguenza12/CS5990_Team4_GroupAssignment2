@@ -130,10 +130,16 @@ def main():
 
     if rank == 0:
         # load data, make graph
-        filename = 'facebook_combined.txt'
-        # filename = 'facebook_combined_chunk.txt'
-        node_names, edges = load_data(filename)
-        graph = make_graph(node_names, edges)
+        # filename = 'facebook_combined.txt'
+        # filename = 'twitter_combined.txt'
+        # filename = 'twitter_combined_chunk.txt'
+        
+        filename = 'facebook_combined_chunk.txt'
+        # node_names, edges = load_data(filename)
+        # graph = make_graph(node_names, edges)
+
+        # Read the file into a graph
+        graph = nx.read_edgelist(filename, delimiter=" ")
 
         # Serialize the graph
         serialized_graph = pickle.dumps(graph)
