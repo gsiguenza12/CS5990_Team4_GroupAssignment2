@@ -52,6 +52,7 @@ def closeness_centrality(dist, graph):
 def process_data(graph, nodes, rank):
     dist = {}
     centrality = {}
+    paths = {}
     count = 0
     start_time = time.time()  # Record the start time
     # print(f"start time: ", start_time)
@@ -68,7 +69,7 @@ def process_data(graph, nodes, rank):
             percent_complete = (count + 1) / len(nodes)
             progress_bar(percent_complete)
 
-            dist[node], paths = nx.single_source_dijkstra(graph, node)
+            dist[node], paths[node] = nx.single_source_dijkstra(graph, node)
             centrality = closeness_centrality(dist, graph)
             file.write(f"Node {node}: Closeness Centrality = {centrality[node]:}\n")  # Write each node's centrality
             count += 1
@@ -93,7 +94,20 @@ def process_data(graph, nodes, rank):
     minutes = int((elapsed_time % 3600) // 60)
     seconds = int(elapsed_time % 60)
     print(f"Elapsed time: {hours:02}:{minutes:02}:{seconds:02}")
-    return centrality
+    return centrality, paths
+
+# TODO: implement betweenness function
+def calculate_betweenness(node, concatenated_paths):
+
+    return
+
+
+def process_betweenness(nodes, concatenated_paths):
+    ans = {}
+    for node in nodes:
+        ans[node] = calculate_betweenness(node, concatenated_paths)
+
+    return ans
 
 
 def load_data(filename, print=False):
@@ -133,7 +147,7 @@ def main():
         # filename = 'facebook_combined.txt'
         # filename = 'twitter_combined.txt'
         # filename = 'twitter_combined_chunk.txt'
-        
+
         filename = 'facebook_combined_chunk.txt'
         # node_names, edges = load_data(filename)
         # graph = make_graph(node_names, edges)
@@ -156,17 +170,37 @@ def main():
     assigned_nodes = distribute_nodes(graph.nodes(), rank, size)
 
     # Each process processes its assigned nodes
-    partial_sum = process_data(graph, assigned_nodes, rank)
+    partial_sum, paths = process_data(graph, assigned_nodes, rank)
 
     # Gather the partial results from all processes
     all_res = comm.gather(partial_sum, root=0)
+    all_paths = comm.gather(paths, root=0)
 
     if rank == 0:
         concatenated_result = {}
+        concatenated_paths = {}
         for d in all_res:
             concatenated_result.update(d)
-        # print("Concatenated Result:", concatenated_result)
-        print('Run complete.')
+        for t in all_paths:
+            concatenated_paths.update(t)
+        print("Concatenated Result:", concatenated_result)
+        # print('Run complete.')
+        serialized_paths = pickle.dumps(concatenated_paths)
+    else:
+        serialized_paths = None
+
+    serialized_paths = comm.bcast(serialized_paths, root=0)
+    paths = pickle.loads(serialized_paths)
+
+    betweenness = process_betweenness(assigned_nodes, paths)
+    all_bet = comm.gather(betweenness, root=0)
+
+    if rank == 0:
+        concatenated_bet = {}
+
+        for d in all_bet:
+            concatenated_bet.update(d)
+        print("Concatenated betweenness:", concatenated_bet)
 
 
 if __name__ == "__main__":
